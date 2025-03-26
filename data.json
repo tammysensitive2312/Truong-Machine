@@ -1,0 +1,29 @@
+{
+    "depots": [
+        {"id": 0, "location": [0, 0]},
+        {"id": 1, "location": [10, 10]},
+        {"id": 2, "location": [20, 20]}
+    ],
+    "customers": [
+        {"id": 1, "demand": 2, "time_window": [0, 4]},
+        {"id": 2, "demand": 3, "time_window": [1, 5]},
+        {"id": 3, "demand": 5, "time_window": [2, 6]}
+    ],
+    "vehicles": {
+        "vehicles_per_depot": 2,
+        "capacity": 10
+    },
+    "distance_matrix": [
+        [0, 5, 7, 10, 3, 6],
+        [5, 0, 3, 8, 4, 7],
+        [7, 3, 0, 4, 5, 8],
+        [10, 8, 4, 0, 6, 9],
+        [3, 4, 5, 6, 0, 2],
+        [6, 7, 8, 9, 2, 0]
+    ],
+    "parameters": {
+        "max_time": 600,
+        "initial_penalty": 50000,
+        "penalty_increment": 20000
+    }
+}

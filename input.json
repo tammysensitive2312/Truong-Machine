@@ -1,0 +1,23 @@
+{
+    "depot": {"id": 0},
+    "customers": [
+        {"id": 1, "demand": 2, "time_window": [0, 4]},
+        {"id": 2, "demand": 3, "time_window": [1, 5]},
+        {"id": 3, "demand": 5, "time_window": [2, 6]}
+    ],
+    "vehicles": {
+        "count": 2,
+        "capacity": 10
+    },
+    "distance_matrix": [
+        [0, 5, 7, 10],
+        [5, 0, 3, 8],
+        [7, 3, 0, 4],
+        [10, 8, 4, 0]
+    ],
+    "parameters": {
+        "max_time": 600,
+        "initial_penalty": 50000,
+        "penalty_increment": 20000
+    }
+}
