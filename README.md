@@ -1,0 +1,2 @@
+- This repository is source code for Truong Machine, its base on documents and research from Mr. SM Harwood. 
+- Following to this link : https://github.com/smharwood/vrp-as-qubo
