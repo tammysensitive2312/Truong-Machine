@@ -1,0 +1,189 @@
+@startuml
+abstract class RoutingProblem {
+  #vrptw: unique_ptr<VehicleRoutingProblemWithTimeWindows>
+  #feasible_solution: Eigen::VectorXf
+
+  +RoutingProblem(vrptw_ptr: VehicleRoutingProblemWithTimeWindows* = nullptr)
+  +~RoutingProblem(): virtual
+
+  +get_nodes(): const vector<Node*>&
+  +get_node_names(): const vector<string>&
+  +get_arcs(): const map<pair<int, int>, Arc*>&
+  +get_depot_index(): int
+  +get_vehicle_capacity(): float
+  +get_initial_loading(): float
+  +set_vehicle_capacity(capacity: float): void
+  +set_initial_loading(loading: float): void
+
+  +add_node(node_name: string, demand: float, time_window: tuple<float, float>): void
+  +get_node_index(node_name: string): int const
+  +get_node(node_name: string): Node* const
+  +set_depot(depot_name: string): void
+
+  +add_arc(origin_name: string, destination_name: string, travel_time: float, cost: float = 0): bool
+  +estimate_max_vehicles(): int const
+
+  +get_num_variables(): int {abstract}
+  +make_feasible(high_cost: float): void {abstract}
+  +get_objective_data(): tuple<Eigen::VectorXf, Eigen::SparseMatrix<float>> {abstract}
+  +get_constraint_data(): tuple<Eigen::SparseMatrix<float>, Eigen::VectorXf, Eigen::SparseMatrix<float>, float> {abstract}
+  +get_sufficient_penalty(feasibility: bool): float const {abstract}
+
+  +get_qubo(feasibility: bool = false, penalty_parameter: float = -1): tuple<Eigen::SparseMatrix<float>, float>
+  +get_cplex_problem(): unique_ptr<IloCplex> {abstract}
+  +export_mip(filename: string = ""): void const {abstract}
+  +solve_cplex_problem(solution_filename: string = ""): vector<double> const {abstract}
+}
+
+class Node {
+  -name: string
+  -demand: float
+  -time_window: tuple<float, float>
+
+  +Node(name: string, demand: float, t_w: tuple<float, float>)
+  +Node(other: const Node&)
+  +Node()
+
+  +get_name(): string const
+  +get_demand(): float const
+  +get_load(): float const
+  +get_window(): tuple<float, float> const
+
+  +<<friend>> operator<<(os: ostream&, node: const Node&): ostream&
+}
+
+class Arc {
+  -origin: Node*
+  -destination: Node*
+  -travel_time: float
+  -cost: float
+
+  +Arc(origin: Node*, destination: Node*, travel_time: float, cost: float)
+
+  +get_origin(): Node* const
+  +get_destination(): Node* const
+  +get_travel_time(): float const
+  +get_cost(): float const
+
+  +<<friend>> operator<<(os: ostream&, arc: const Arc&): ostream&
+}
+
+class VehicleRoutingProblemWithTimeWindows {
+  -node_names: vector<string>
+  -nodes: vector<Node*>
+  -arcs: map<pair<int, int>, Arc*>
+  -depot_index: int = 0
+  -vehicle_capacity: float = 0.0f
+  -initial_loading: float = 0.0f
+
+  +VehicleRoutingProblemWithTimeWindows(node_names: const vector<string>&, nodes: const vector<Node*>&, arcs: const map<pair<int, int>, Arc*>&, depot_index: int, vehicle_capacity: float, initial_loading: float)
+  +VehicleRoutingProblemWithTimeWindows()
+  +VehicleRoutingProblemWithTimeWindows(other: const VehicleRoutingProblemWithTimeWindows&)
+  +~VehicleRoutingProblemWithTimeWindows(): virtual
+
+  +get_node_names(): const vector<string>& const
+  +get_nodes(): const vector<Node*>& const
+  +get_arcs(): const map<pair<int, int>, Arc*>& const
+  +get_depot_index(): int const
+  +get_vehicle_capacity(): float const
+  +get_initial_loading(): float const
+
+  +set_vehicle_capacity(vehicleCapacity: float): void
+  +set_initial_loading(loading: float): void
+
+  +add_node(node_name: const string&, demand: float, t_w: const tuple<float, float>&): void
+  +get_node_index(node_name: const string&): int const
+  +get_node(node_name: const string&): Node* const
+  +set_depot(depot_name: const string&): void
+
+  +add_arc(originName: string, destinationName: string, travelTime: float, cost: float = 0): bool
+  +estimate_max_vehicles(): int const
+
+  +<<friend>> operator<<(os: ostream&, vrptw: const VehicleRoutingProblemWithTimeWindows&): ostream&
+}
+class ArcBasedRoutingProblem extends RoutingProblem{
+        -vector~float~ time_points
+        -unordered_map~tuple~int,float,int,float~,int~ variables_mapping
+        -int num_variables
+        -bool variables_enumerated
+        -bool constraints_built
+        -bool objective_built
+        -vector~string~ constraint_names
+        -VectorXf objective
+        -SparseMatrix~float~ constraints_matrix
+        -VectorXf constraints_rhs
+
+        -enumerate_variables_quicker() void
+        -build_constraints() void
+        -build_constraints_quicker() void
+        -check_and_add_exit_arc(int node_index, float cost) void
+
+        +ArcBasedRoutingProblem()
+        +~ArcBasedRoutingProblem()
+        +get_num_variables() int
+        +make_feasible(float high_cost) void
+        +get_objective_data() tuple
+        +get_constraint_data() tuple
+        +get_cplex_problem() unique_ptr~IloCplex~
+        +solve_cplex_problem(string solution_filename) vector~double~
+        +get_sufficient_penalty(bool feasibility) double
+        +add_time_points(vector~float~ new_time_points) void
+        +check_arc(pair~int,int~ arc_key) bool
+        +check_node_time_compat(int node_idx, float time_point) bool
+        +build_objective() void
+        +enumerate_variables() void
+        +get_time_points() vector~float~
+        +get_variable_index(int node1_idx, float time1, int node2_idx, float time2) optional~int~
+        +get_variable_tuple_index(int variable_idx) optional~tuple~
+        +get_arrival_time(float departure_time, Arc* arc) tuple
+        +get_routes(VectorXf solution) vector~vector~pair~int,float~~~
+    }
+class PathBasedRoutingProblem extends RoutingProblem {}
+class SequenceBasedRoutingProblem extends RoutingProblem {}
+
+class RouringProblemFacrory {
+    +get_arc_based(make_feasible: bool): ArcBasedRoutingProblem
+    +get_path_based(make_feasible: bool): PathBasedRoutingProblem
+    +get_sequence_based(make_feasible: bool, strict: bool): SequenceBasedRoutingProblem
+}
+class MarineInventoryRoutingProblem {
+  -cargo_size: float
+  -time_horizon: float
+  -supply_ports: list[str]
+  -demand_ports: list[str]
+  -port_mapping: dict[str, list[str]]
+  -port_frequency: dict[str, float]
+  -routes_added: bool
+  -vrptw: VRPTW
+  -rpfr: RoutingProblemFactory
+  +__init__(cargo_size: float, time_horizon: float)
+  +add_node(name: str, demand: float, time_window: Tuple[float])
+  +add_arc(origin: str, destination: str, travel_time: float, cost: float)
+  +get_time_window(num_prior_visits: int, inventory_init: float, inventory_rate: float, inventory_cap: float): Tuple[float]
+  +add_nodes(name: str, inventory_init: float, inventory_rate: float, inventory_cap: float): list[str]
+  +add_travel_arcs(distance_function: Callable[[str, str], float], vessel_speed: float, cost_per_unit_distance: float, supply_port_fees: dict[str, float], demand_port_fees: dict[str, float])
+  +add_entry_arcs(time_limit: float, travel_time: float, cost: float)
+  +add_exit_arcs(travel_time: float, cost: float)
+  +estimate_high_cost(): float
+}
+
+object Client {
+  -generate_test_set()
+  -test_feasibility()
+  -solve()
+  +main()
+}
+
+Arc "1..*" <--* "1" VehicleRoutingProblemWithTimeWindows
+Arc "1" o--> "1..*" Node
+Node "1..*" <--* "1" VehicleRoutingProblemWithTimeWindows
+VehicleRoutingProblemWithTimeWindows <--o RoutingProblem
+ArcBasedRoutingProblem --o RouringProblemFacrory
+PathBasedRoutingProblem --o RouringProblemFacrory
+SequenceBasedRoutingProblem --o RouringProblemFacrory
+
+VehicleRoutingProblemWithTimeWindows --* MarineInventoryRoutingProblem
+MarineInventoryRoutingProblem --> RouringProblemFacrory
+
+Client --> MarineInventoryRoutingProblem
+@enduml
