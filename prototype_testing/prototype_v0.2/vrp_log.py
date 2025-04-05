@@ -3,10 +3,11 @@ import time
 import os
 import json
 from datetime import datetime
+import matplotlib.pyplot as plt
 
 
 class VRPLogger:
-    def __init__(self, log_file="vrp_solver.log", log_level=logging.INFO, console_output=True):
+    def __init__(self, log_file="output/vrp_solver.log", log_level=logging.INFO, console_output=True):
         """Khởi tạo logger cho bài toán VRP"""
         self.start_time = time.time()
 
@@ -131,8 +132,9 @@ class VRPLogger:
         elapsed_time = time.time() - self.start_time
         self.logger.info(f"\nTổng thời gian chạy: {elapsed_time:.2f} giây")
 
-    def save_solution_visualization(self, sample, points, data, filename="solution_viz.png"):
-        """Lưu trực quan hóa nghiệm"""
-        # Phần này phụ thuộc vào cách bạn muốn trực quan hóa kết quả
-        # Có thể dùng matplotlib, networkx, etc.
-        self.logger.info(f"Lưu trực quan hóa kết quả tại: {filename}")
+    def plot_convergence(self):
+        plt.plot(self.energies)
+        plt.title("Energy Convergence")
+        plt.xlabel("Iteration")
+        plt.ylabel("Energy")
+        plt.savefig("convergence.png")

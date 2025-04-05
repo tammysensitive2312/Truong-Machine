@@ -55,7 +55,7 @@ def build_qubo(data, A):
 
     # Trích xuất dữ liệu
     depot_id = data['depot']['id']
-    customers = data['customers']
+    customers = data['customers']['id']
     vehicles_count = data['vehicles']['count']
     capacity = data['vehicles']['capacity']
     distance_matrix = data['distance_matrix']

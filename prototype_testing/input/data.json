@@ -25,5 +25,10 @@
         "max_time": 600,
         "initial_penalty": 50000,
         "penalty_increment": 20000
+    },
+    "sa_params": {
+        "num_reads": 500,
+        "num_sweeps": 10000,
+        "beta_range": [0.1, 10.0]
     }
 }
