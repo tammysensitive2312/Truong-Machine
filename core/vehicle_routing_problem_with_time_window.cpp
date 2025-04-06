@@ -66,7 +66,7 @@ Node::Node() {}
   * An arc goes from one node to another (distinct) node
   * It has an associated travel time, and potentially a cost
 */
-Arc::Arc(Node *origin, Node *destination, float travelTime, float cost) :
+Arc::Arc(Node *origin, Node *destination, float travel_time, float cost) :
         origin(origin), destination(destination), travel_time(travel_time), cost(cost) {
 }
 

@@ -50,6 +50,7 @@ private:
     void check_and_add_exit_arc(int node_index, float cost);
 public:
     ArcBasedRoutingProblem();
+    ArcBasedRoutingProblem(VehicleRoutingProblemWithTimeWindows* vrptw_ptr = nullptr);
 
     ~ArcBasedRoutingProblem() override = default;
 
@@ -70,9 +71,9 @@ public:
 
     std::unique_ptr<IloCplex> get_cplex_problem() override;
 
-    std::vector<double> solve_cplex_problem(const std::string &solution_filename) const override;
+//    std::vector<double> solve_cplex_problem(const std::string &solution_filename) const override;
 
-    double get_sufficient_penalty(bool feasibility);
+    float get_sufficient_penalty(bool feasibility) const;
 
     void add_time_points(const std::vector<float>& new_time_points);
 

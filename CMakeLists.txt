@@ -63,10 +63,13 @@ message(STATUS "CPLEX_LIBRARY: ${CPLEX_LIBRARY}")
 message(STATUS "ILOCPLEX_LIBRARY: ${ILOCPLEX_LIBRARY}")
 message(STATUS "CONCERT_LIBRARY: ${CONCERT_LIBRARY}")
 
+add_subdirectory(E:/Vehicle_Routing_Problem_as_QUBO/googletest)
 # Thêm các thư mục include cho dự án
 include_directories(
         ${CPLEX_INCLUDE_DIRS}
         ${CMAKE_SOURCE_DIR}/header
+        ${gtest_SOURCE_DIR}/include
+        ${gmock_SOURCE_DIR}/include
 )
 
 # Tạo thư viện chia sẻ
@@ -91,13 +94,16 @@ if(CPLEX_LIBRARY AND ILOCPLEX_LIBRARY AND CONCERT_LIBRARY)
             ${CPLEX_LIBRARY}
             ${CONCERT_LIBRARY}
     )
-    if(NOT WIN32)
-        target_link_libraries(Vehicle_Routing_Problem_as_QUBO pthread dl m)
-    endif()
 else()
     message(FATAL_ERROR "Could not find CPLEX libraries. Please check your installation paths.")
 endif()
 
-# Tạo một ứng dụng thực thi (nếu cần)
-# add_executable(vrptw_app main.cpp)
-# target_link_libraries(vrptw_app Vehicle_Routing_Problem_as_QUBO)
+add_executable(run_tests
+        unittest/test_vehicle_routing_problem_with_time_window.cpp
+)
+target_compile_definitions(Vehicle_Routing_Problem_as_QUBO PRIVATE VEHICLE_ROUTING_PROBLEM_AS_QUBO_EXPORTS)
+target_link_libraries(run_tests
+        Vehicle_Routing_Problem_as_QUBO
+        gtest
+        gtest_main
+)

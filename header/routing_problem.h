@@ -143,12 +143,12 @@ public:
     /**
      * Xuất mô hình Mixed Integer Programming ra file
      */
-    virtual void export_mip(const std::string& filename = "") const = 0;
+    void export_mip(const std::string& filename = "");
 
     /**
      * Solve constrained integer formulation with CPLEX
      */
-    virtual std::vector<double> solve_cplex_problem(const std::string& solution_filename = "") const = 0;
+//    virtual std::vector<double> solve_cplex_problem(const std::string& solution_filename = "") const = 0;
 
     // const std::vector<int> &get_feasible_solution() const;
 };

@@ -149,22 +149,29 @@ class RouringProblemFacrory {
 class MarineInventoryRoutingProblem {
   -cargo_size: float
   -time_horizon: float
-  -supply_ports: list[str]
-  -demand_ports: list[str]
-  -port_mapping: dict[str, list[str]]
-  -port_frequency: dict[str, float]
+  -supply_ports: std::vector<std::string>
+  -demand_ports: std::vector<std::string>
+  -port_mapping: std::map<std::string, std::vector<std::string>>
+  -port_frequency: std::map<std::string, float>
   -routes_added: bool
-  -vrptw: VRPTW
-  -rpfr: RoutingProblemFactory
-  +__init__(cargo_size: float, time_horizon: float)
-  +add_node(name: str, demand: float, time_window: Tuple[float])
-  +add_arc(origin: str, destination: str, travel_time: float, cost: float)
-  +get_time_window(num_prior_visits: int, inventory_init: float, inventory_rate: float, inventory_cap: float): Tuple[float]
-  +add_nodes(name: str, inventory_init: float, inventory_rate: float, inventory_cap: float): list[str]
-  +add_travel_arcs(distance_function: Callable[[str, str], float], vessel_speed: float, cost_per_unit_distance: float, supply_port_fees: dict[str, float], demand_port_fees: dict[str, float])
-  +add_entry_arcs(time_limit: float, travel_time: float, cost: float)
-  +add_exit_arcs(travel_time: float, cost: float)
+  -vrptw: std::unique_ptr<VRPTW>
+  -abrp: std::unique_ptr<ArcBasedRoutingProblem>
+  -pbrp: std::unique_ptr<PathBasedRoutingProblem>
+  -sbrp: std::unique_ptr<SequenceBasedRoutingProblem>
+  +MIRP(cargo_size: float, time_horizon: float)
+  +~MIRP()
+  +add_node(name: std::string, demand: float, time_window: std::tuple<float, float>) : void
+  +add_arc(origin: std::string, destination: std::string, travel_time: float, cost: float) : void
+  +get_time_window(num_prior_visits: int, inventory_init: float, inventory_rate: float, inventory_cap: float): std::tuple<float, float>
+  +add_nodes(name: std::string, inventory_init: float, inventory_rate: float, inventory_cap: float): std::vector<std::string>
+  +add_travel_arcs(distance_function: std::function<float(std::string, std::string)>, vessel_speed: float, cost_per_unit_distance: float, supply_port_fees: std::map<std::string, float>, demand_port_fees: std::map<std::string, float>)
+  +add_entry_arcs(time_limit: float, travel_time: float = 0, cost: float = 0)
+  +add_exit_arcs(travel_time: float = 0, cost: float = 0)
   +estimate_high_cost(): float
+  +get_arc_based(make_feasible: bool = true): ArcBasedRoutingProblem*
+  +get_path_based(make_feasible: bool = true): PathBasedRoutingProblem*
+  +get_sequence_based(make_feasible: bool = true, strict: bool = true): SequenceBasedRoutingProblem*
+  +to_string(): std::string
 }
 
 object Client {

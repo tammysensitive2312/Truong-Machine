@@ -9,6 +9,11 @@
 
 ArcBasedRoutingProblem::ArcBasedRoutingProblem() {}
 
+ArcBasedRoutingProblem::ArcBasedRoutingProblem(VehicleRoutingProblemWithTimeWindows *vrptw_ptr) : RoutingProblem(
+        vrptw_ptr) {
+
+}
+
 int ArcBasedRoutingProblem::get_num_variables() {
     if (!variables_enumerated) {
         enumerate_variables();
@@ -182,7 +187,7 @@ ArcBasedRoutingProblem::get_constraint_data() {
                 problem. Sufficient penalty value can be zero
     @return sufficient_pp (float): Penalty parameter value
  */
-double ArcBasedRoutingProblem::get_sufficient_penalty(bool feasibility) {
+float ArcBasedRoutingProblem::get_sufficient_penalty(bool feasibility) const {
     double sufficient_pp;
     if (feasibility) sufficient_pp = 0.0;
     else {
@@ -257,9 +262,9 @@ std::unique_ptr<IloCplex> ArcBasedRoutingProblem::get_cplex_problem() {
     return cplex;
 }
 
-std::vector<double> ArcBasedRoutingProblem::solve_cplex_problem(const std::string &solutionFilename) const {
-    return {};
-}
+//std::vector<double> ArcBasedRoutingProblem::solve_cplex_problem(const std::string &solutionFilename) const {
+//    return {};
+//}
 
 void ArcBasedRoutingProblem::add_time_points(const std::vector<float>& new_time_points) {
     time_points = new_time_points;

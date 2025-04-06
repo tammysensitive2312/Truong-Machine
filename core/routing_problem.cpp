@@ -107,3 +107,18 @@ std::tuple<Eigen::SparseMatrix<float>, float> RoutingProblem::get_qubo(bool feas
 
     return {Q, constant};
 }
+
+void RoutingProblem::export_mip(const std::string &filename) {
+    // Export constrained integer program representation of problem
+    std::string output_filename;
+    if (filename.empty()) {
+        output_filename = typeid(*this).name();
+        output_filename += ".lp";
+    } else {
+        output_filename = filename;
+    }
+
+    std::unique_ptr<IloCplex> cplex_prob = get_cplex_problem();
+
+    cplex_prob->exportModel(output_filename.c_str());
+}

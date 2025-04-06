@@ -5,6 +5,12 @@
 #ifndef VEHICLE_ROUTING_PROBLEM_WITH_TIME_WINDOW_H
 #define VEHICLE_ROUTING_PROBLEM_WITH_TIME_WINDOW_H
 
+#ifdef VEHICLE_ROUTING_PROBLEM_AS_QUBO_EXPORTS
+#define VEHICLE_ROUTING_PROBLEM_AS_QUBO_API __declspec(dllexport)
+#else
+#define VEHICLE_ROUTING_PROBLEM_AS_QUBO_API __declspec(dllimport)
+#endif
+
 #include <string>
 #include <map>
 #include <vector>
@@ -12,7 +18,7 @@
 #include <limits>
 #include <iostream>
 
-class Node {
+class VEHICLE_ROUTING_PROBLEM_AS_QUBO_API Node {
 private:
     std::string name;
     float demand;
@@ -33,7 +39,7 @@ public:
     friend std::ostream &operator<<(std::ostream &os, const Node &node);
 };
 
-class Arc {
+class VEHICLE_ROUTING_PROBLEM_AS_QUBO_API Arc {
 private:
     Node *origin;
     Node *destination;
@@ -51,7 +57,7 @@ public:
     friend std::ostream &operator<<(std::ostream &os, const Arc &arc);
 };
 
-class VehicleRoutingProblemWithTimeWindows {
+class VEHICLE_ROUTING_PROBLEM_AS_QUBO_API VehicleRoutingProblemWithTimeWindows {
 private:
     std::vector<std::string> node_names;
     std::vector<Node*> nodes;
