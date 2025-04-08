@@ -5,6 +5,12 @@
 #ifndef VEHICLE_ROUTING_PROBLEM_AS_QUBO_ARC_BASED_ROUTING_PROBLEM_H
 #define VEHICLE_ROUTING_PROBLEM_AS_QUBO_ARC_BASED_ROUTING_PROBLEM_H
 
+#ifdef VEHICLE_ROUTING_PROBLEM_AS_QUBO_EXPORTS
+#define VEHICLE_ROUTING_PROBLEM_AS_QUBO_API __declspec(dllexport)
+#else
+#define VEHICLE_ROUTING_PROBLEM_AS_QUBO_API __declspec(dllimport)
+#endif
+
 #include "routing_problem.h"
 #include "optional"
 
@@ -23,7 +29,7 @@ namespace std {
 }
 
 
-class ArcBasedRoutingProblem : public RoutingProblem {
+class VEHICLE_ROUTING_PROBLEM_AS_QUBO_API ArcBasedRoutingProblem : public RoutingProblem {
 private:
     std::vector<float> time_points;
     std::unordered_map<std::tuple<int, float, int, float>, int> variables_mapping;
@@ -49,7 +55,6 @@ private:
 
     void check_and_add_exit_arc(int node_index, float cost);
 public:
-    ArcBasedRoutingProblem();
     ArcBasedRoutingProblem(VehicleRoutingProblemWithTimeWindows* vrptw_ptr = nullptr);
 
     ~ArcBasedRoutingProblem() override = default;

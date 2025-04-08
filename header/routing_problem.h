@@ -5,6 +5,12 @@
 #ifndef VEHICLE_ROUTING_PROBLEM_AS_QUBO_ROUTING_PROBLEM_H
 #define VEHICLE_ROUTING_PROBLEM_AS_QUBO_ROUTING_PROBLEM_H
 
+#ifdef VEHICLE_ROUTING_PROBLEM_AS_QUBO_EXPORTS
+#define VEHICLE_ROUTING_PROBLEM_AS_QUBO_API __declspec(dllexport)
+#else
+#define VEHICLE_ROUTING_PROBLEM_AS_QUBO_API __declspec(dllimport)
+#endif
+
 #include <string>
 #include <vector>
 #include <map>
@@ -16,7 +22,7 @@
 #include "ilcplex/ilocplex.h"
 
 
-class RoutingProblem {
+class VEHICLE_ROUTING_PROBLEM_AS_QUBO_API RoutingProblem {
     /**
     A base class intended to enforce a consistent interface among the different
             formulations of the Vehicle Routing Problem with Time Windows (VRPTW)
@@ -150,7 +156,7 @@ public:
      */
 //    virtual std::vector<double> solve_cplex_problem(const std::string& solution_filename = "") const = 0;
 
-    // const std::vector<int> &get_feasible_solution() const;
+     const Eigen::VectorXf &get_feasible_solution() const;
 };
 
 

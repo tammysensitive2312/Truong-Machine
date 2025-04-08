@@ -7,10 +7,8 @@
 #include "chrono"
 #include "Eigen/Dense"
 
-ArcBasedRoutingProblem::ArcBasedRoutingProblem() {}
-
-ArcBasedRoutingProblem::ArcBasedRoutingProblem(VehicleRoutingProblemWithTimeWindows *vrptw_ptr) : RoutingProblem(
-        vrptw_ptr) {
+ArcBasedRoutingProblem::ArcBasedRoutingProblem(VehicleRoutingProblemWithTimeWindows* vrptw_ptr)
+        : RoutingProblem(vrptw_ptr) {
 
 }
 
@@ -29,61 +27,143 @@ void ArcBasedRoutingProblem::make_feasible(float high_cost) {
         unvisited_indices.push_back(i);
     }
 
+    std::cout << "Unvisited indices: ";
+    for (int index : unvisited_indices) {
+        std::cout << index << " ";
+    }
+    std::cout << std::endl;
+
+    std::cout<< "Starting to used arcs..." << std::endl;
+
     // starting from depot,
     // go through unvisited nodes,
     // greedily visit first unvisited node that we can (satisfying timing constraints)
     // repeat until outgoing arcs from depot are exhausted
     std::vector<std::tuple<int, float, int, float>> used_arcs;
     int max_vehicles = estimate_max_vehicles();
+    std::cout << "Max vehicles: " << max_vehicles << std::endl;
     for (int vehicle = 0; vehicle < max_vehicles; ++vehicle) {
-        // start from depot, build a route
+        std::cerr << "\n===== Processing vehicle " << vehicle + 1 << "/" << max_vehicles << " =====" << std::endl;
+
+        // Bắt đầu từ depot
         int current_node = 0;
-        float current_time = time_points.at(0);
+        float current_time = time_points.at(0); // Sử dụng at() để kiểm tra range
         bool building_route = true;
+        std::cerr << "Start from depot (node 0), current_time = " << current_time << std::endl;
 
         while (building_route) {
-            // go through unvisited nodes, choose first available
+            std::cerr << "\n-- Current node: " << current_node
+                      << ", current time: " << current_time
+                      << ", unvisited node: " << unvisited_indices.size()
+                      << std::endl;
+
+            // Tìm nút tiếp theo
             std::optional<int> best_node = std::nullopt;
             float best_arrival = std::numeric_limits<float>::infinity();
 
+            // Debug: In danh sách các nút chưa thăm
+            std::cerr << "unvisited node list: ";
+            for (int n : unvisited_indices) std::cerr << n << " ";
+            std::cerr << std::endl;
+
             for (int n : unvisited_indices) {
                 std::pair<int, int> arc = {current_node, n};
-                auto [arrival_actual, in_tp] = get_arrival_time(current_time, get_arcs().at(arc));
-                if (check_arc(arc)) {
-                    if (in_tp) {
-                        auto [t_w_start, t_w_end] = get_nodes().at(n)->get_window();
-                        if (arrival_actual <= t_w_end && arrival_actual < best_arrival) {
-                            best_node = n;
-                            best_arrival = arrival_actual;
-                        }
+                std::cerr << "  Investigate arc " << arc.first << "->" << arc.second;
+
+                try {
+                    // Kiểm tra arc tồn tại
+                    if (!check_arc(arc)) {
+                        std::cerr << " (Non-existent)" << std::endl;
+                        continue;
                     }
+
+                    // Lấy thời gian đến
+                    auto [arrival_actual, in_tp] = get_arrival_time(current_time, get_arcs().at(arc)); // Sử dụng at() để kiểm tra key
+                    std::cerr << ", arrival_actual = " << arrival_actual
+                              << ", in_tp = " << std::boolalpha << in_tp;
+
+                    // Kiểm tra time window
+                    if (!in_tp) continue;
+                    auto [t_w_start, t_w_end] = get_nodes().at(n)->get_window(); // Sử dụng at() để kiểm tra index
+                    std::cerr << ", time window [" << t_w_start << ", " << t_w_end << "]";
+
+                    if (arrival_actual <= t_w_end && arrival_actual < best_arrival) {
+                        best_node = n;
+                        best_arrival = arrival_actual;
+                        std::cerr << " --> Update best_node!";
+                    }
+                    std::cerr << std::endl;
+
+                } catch (const std::exception& e) {
+                    std::cerr << "\nERROR WHILE PROCESS NODE " << n << ": " << e.what() << std::endl;
+                    throw;
                 }
             }
 
             if (best_node.has_value()) {
                 int n = best_node.value();
+                std::cerr << "Choose next node: " << n
+                          << ", arrival_time = " << best_arrival
+                          << std::endl;
+
+                // Thêm arc vào lộ trình
                 used_arcs.emplace_back(current_node, current_time, n, best_arrival);
+
+                // Cập nhật trạng thái
                 current_node = n;
                 current_time = best_arrival;
-                unvisited_indices.erase(
-                        std::find(unvisited_indices.begin(), unvisited_indices.end(), n));
+
+                // Xóa nút khỏi danh sách chưa thăm
+                auto it = std::find(unvisited_indices.begin(), unvisited_indices.end(), n);
+                if (it != unvisited_indices.end()) {
+                    unvisited_indices.erase(it);
+                    std::cerr << "Deleted node " << n << " from unvisited node list" << std::endl;
+                } else {
+                    std::cerr << "Can't find node " << n << " from unvisited node list!" << std::endl;
+                }
+
             } else {
+                std::cerr << "Can't find next node acceptend!" << std::endl;
                 building_route = false;
+
+                // Xử lý quay về depot
                 if (current_node != 0) {
                     std::pair<int, int> arc_back = {current_node, 0};
-                    if (check_arc(arc_back)) {
+                    std::cerr << "Try back to depot from node : " << current_node << std::endl;
+
+                    try {
+                        if (!check_arc(arc_back)) {
+                            throw std::runtime_error("There is no supply to the depot");
+                        }
+
                         auto [arrival_actual, in_tp] = get_arrival_time(current_time, get_arcs().at(arc_back));
+                        std::cerr << "Arrival time to depot: " << arrival_actual
+                                  << ", in_tp = " << std::boolalpha << in_tp << std::endl;
+
                         if (in_tp) {
                             used_arcs.emplace_back(current_node, current_time, 0, arrival_actual);
+                            std::cerr << "Added supply node to depot successfully" << std::endl;
                         } else {
-                            throw std::runtime_error("Không thể quay về depot từ nút " + std::to_string(current_node));
+                            throw std::runtime_error("The time to arrive at the depot is not included in the time window");
                         }
-                    } else {
-                        throw std::runtime_error("Không có cung về depot từ nút " + std::to_string(current_node));
+
+                    } catch (const std::exception& e) {
+                        std::cerr << "ERROR WHEN RETURNING TO DEPOT: " << e.what() << std::endl;
+                        throw std::runtime_error(
+                                "Unable to complete the route for the vehicle " + std::to_string(vehicle) +
+                                ". Reason: " + e.what()
+                        );
                     }
                 }
+                std::cerr << "End of roadmap for vehicle " << vehicle << std::endl;
             }
         }
+    }
+    std::cout << "End of route for all vehicles." << std::endl;
+    std::cout << "Used arcs: ";
+    for (const auto& arc_tuple : used_arcs) {
+        auto [i, s, j, t] = arc_tuple;
+        std::cout << "(" << i << ", " << s << ", " << j << ", " << t << ") ";
     }
 
     // Thêm cung giả cho các nút chưa được thăm

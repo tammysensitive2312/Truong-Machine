@@ -1,4 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$" />
+  <component name="CidrRootsConfiguration">
+    <sourceRoots>
+      <file path="$PROJECT_DIR$/application" />
+      <file path="$PROJECT_DIR$/client" />
+      <file path="$PROJECT_DIR$/core" />
+      <file path="$PROJECT_DIR$/header" />
+      <file path="$PROJECT_DIR$/tools" />
+    </sourceRoots>
+    <libraryRoots>
+      <file path="$PROJECT_DIR$/eigen-3.4.0" />
+      <file path="$PROJECT_DIR$/googletest" />
+    </libraryRoots>
+  </component>
 </project>

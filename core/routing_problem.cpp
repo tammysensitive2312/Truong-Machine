@@ -69,6 +69,10 @@ int RoutingProblem::estimate_max_vehicles() const {
     return vrptw->estimate_max_vehicles();
 }
 
+const Eigen::VectorXf &RoutingProblem::get_feasible_solution() const {
+    return feasible_solution;
+}
+
 std::tuple<Eigen::SparseMatrix<float>, float> RoutingProblem::get_qubo(bool feasibility, float penalty_parameter) {
     float sufficient_pp = get_sufficient_penalty(feasibility);
 

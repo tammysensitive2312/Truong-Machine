@@ -82,8 +82,14 @@ add_library(Vehicle_Routing_Problem_as_QUBO SHARED
         header/arc_based_routing_problem.h
         application/marine_inventory_routing_problem.cpp
         header/marine_inventory_routing_problem.h
-        core/routing_problem_factory.cpp
-        header/routing_problem_factory.h
+        tools/ising_tools.cpp
+        header/ising_tools.h
+        tools/qubo_tools.cpp
+        header/qubo_tools.h
+        tools/qubo_container.cpp
+        header/qubo_container.h
+        header/get_mirp.h
+        client/get_mirp.cpp
 )
 
 # Kiểm tra nếu có tìm thấy thư viện CPLEX
@@ -100,10 +106,20 @@ endif()
 
 add_executable(run_tests
         unittest/test_vehicle_routing_problem_with_time_window.cpp
+        unittest/test_arc_based.cpp
+        unittest/test_mirp.cpp
+        unittest/test_get_mirp.cpp
+        client/get_mirp.cpp
+)
+add_executable(run_app
+        main.cpp
 )
 target_compile_definitions(Vehicle_Routing_Problem_as_QUBO PRIVATE VEHICLE_ROUTING_PROBLEM_AS_QUBO_EXPORTS)
 target_link_libraries(run_tests
         Vehicle_Routing_Problem_as_QUBO
         gtest
         gtest_main
+)
+target_link_libraries(run_app
+        Vehicle_Routing_Problem_as_QUBO
 )

@@ -7,6 +7,7 @@
 #include "algorithm"
 #include "stdexcept"
 #include "set"
+#include "limits"
 
 
 MarineInventoryRoutingProblem::MarineInventoryRoutingProblem(float cargo_size, float time_horizon)
@@ -29,7 +30,7 @@ MarineInventoryRoutingProblem::MarineInventoryRoutingProblem(float cargo_size, f
      */
     vrptw->set_initial_loading(0.0f);
     vrptw->set_vehicle_capacity(cargo_size);
-    vrptw->add_node("Depot", 0.0f, std::make_tuple(0.0f, time_horizon));
+    vrptw->add_node("Depot", 0.0f);
     vrptw->set_depot("Depot");
 }
 
@@ -39,9 +40,9 @@ void MarineInventoryRoutingProblem::add_node(const std::string& name, float dema
 }
 
 // Add an arc to the underlying VRPTW graph
-void MarineInventoryRoutingProblem::add_arc(std::string origin_name, std::string destination_name, float travel_time,
+bool MarineInventoryRoutingProblem::add_arc(std::string origin_name, std::string destination_name, float travel_time,
                                             float cost) {
-    vrptw ->add_arc(origin_name, destination_name, travel_time, cost);
+    return vrptw ->add_arc(origin_name, destination_name, travel_time, cost);
 }
 /**
 Determine the time window of this node. A single physical port must be
@@ -69,7 +70,7 @@ MarineInventoryRoutingProblem::get_time_window(int num_prior_visits, float inven
         float t_w0 = ((num_prior_visits+1)*size - inventory_init)/inventory_rate;
         // latest a ship can arrive before port capacity is exceeded:
         // inventory(t) - (num_prior_visits)*size > inventory_cap
-        float t_w1 = (inventory_cap + (num_prior_visits)*size - inventory_rate);
+        float t_w1 = (inventory_cap + (num_prior_visits)*size - inventory_init)/inventory_rate;
         return std::make_tuple(t_w0, t_w1);
     } else {
         // DEMAND
@@ -195,8 +196,8 @@ void MarineInventoryRoutingProblem::add_entry_arcs(float time_limit, float trave
             if (std::get<1>(time_window) < time_limit) {
                 std::string dummy = "Dum" + std::to_string(num_dum);
                 num_dum++;
-                // Thêm nút giả với nhu cầu -cargo_size, time_window mặc định [0, time_horizon]
-                vrptw->add_node(dummy, -cargo_size, std::make_tuple(0.0f, time_horizon));
+                // Thêm nút giả với nhu cầu -cargo_size, time_window mặc định [0, infinity]
+                vrptw->add_node(dummy, -cargo_size, std::make_tuple(0.0f, std::numeric_limits<float>::infinity()));
                 std::cout << "Adding entry arc to " << node << std::endl;
                 add_arc(depot_name, dummy, 0.0f, 0.0f);  // Từ depot đến nút giả
                 add_arc(dummy, node, travel_time, cost);  // Từ nút giả đến nút cầu
@@ -232,8 +233,10 @@ void MarineInventoryRoutingProblem::add_exit_arcs(float travel_time, float cost)
 const float MarineInventoryRoutingProblem::estimate_high_cost() const {
     // Kiểm tra nếu port_frequency rỗng
     if (port_frequency.empty()) {
+        std::cerr << "Warning: port_frequency is empty!" << std::endl;
         throw std::runtime_error("port_frequency is empty, cannot estimate high cost");
     }
+    std::cout << "Start estimate hight cost: " << std::endl;
 
     // Tìm tần suất nhỏ nhất (most_freq)
     auto min_freq_it = std::min_element(
@@ -267,18 +270,80 @@ const float MarineInventoryRoutingProblem::estimate_high_cost() const {
  Return the arc-based routing problem object \n
  Build if necessary, including defining the time periods in some way
  */
-ArcBasedRoutingProblem *MarineInventoryRoutingProblem::get_arc_based(bool make_feasible) {
+//ArcBasedRoutingProblem *MarineInventoryRoutingProblem::get_arc_based(bool make_feasible) {
+//    /**
+//     * Return the arc-based routing problem object
+//     * Build if necessary, including defining the time periods in some way
+//     */
+//    if (this->abrp != nullptr) {
+//        return this->abrp.get();
+//    }
+//
+//    this->abrp = std::make_unique<ArcBasedRoutingProblem>(this->vrptw.get());
+//
+//
+////    The only other thing we need to do for arc-based formulation is add
+////    time points. This can be tricky; we want as much resolution as possible,
+////    but also keep it small
+////    Options:
+////      integers that fall in any node's time window
+////      endpoints and midpoints of time windows
+////    We will use the former
+//    std::set<float> tw_points;
+//    for (const Node* n : vrptw->get_nodes()) {
+//        auto [tw0, tw1] = n->get_window();
+//        if (std::isnan(tw0) || std::isnan(tw1)) {
+//            std::cout << "Time window is NaN for node " << n->get_name() << std::endl;
+//        }
+//        if (std::isinf(tw1)) {
+//            continue;
+//        }
+//        int start = static_cast<int>(std::ceil(tw0));
+//        int end = static_cast<int>(std::floor(tw1)) + 1;
+//        for (int t = start; t < end; ++t) {
+//            try {
+//                tw_points.insert(static_cast<float>(t));
+//            } catch (const std::exception &e) {
+//                std::cerr << "Error inserting time point: " << e.what() << std::endl;
+//            }
+//        }
+//    }
+//    try {
+//        tw_points.insert(0.0f);
+//        std::vector<float> time_points(tw_points.begin(), tw_points.end());
+//        std::sort(time_points.begin(), time_points.end());
+//
+//        this->abrp->add_time_points(time_points);
+//    } catch (const std::exception &e) {
+//        std::cerr << "Error adding time points: " << e.what() << std::endl;
+//    }
+//
+//    if (make_feasible) {
+//        float high_cost = this->estimate_high_cost();
+//        this->abrp->make_feasible(high_cost);
+//    }
+//    return this->abrp.get();
+//}
+
+ArcBasedRoutingProblem* MarineInventoryRoutingProblem::get_arc_based(bool make_feasible) {
     /**
      * Return the arc-based routing problem object
      * Build if necessary, including defining the time periods in some way
      */
-    if (this->abrp != nullptr) {
-        return this->abrp.get();
-    }
+    try {
+        // Kiểm tra vrptw trước khi sử dụng
+        if (!vrptw) {
+            throw std::runtime_error("vrptw is nullptr!");
+        }
 
-    this->abrp = std::make_unique<ArcBasedRoutingProblem>(this->vrptw.get());
+        if (this->abrp != nullptr) {
+            return this->abrp.get();
+        }
 
-
+        this->abrp = std::make_unique<ArcBasedRoutingProblem>(vrptw.get());
+        if (!abrp) {
+            throw std::runtime_error("Failed to initialize ArcBasedRoutingProblem!");
+        }
 //    The only other thing we need to do for arc-based formulation is add
 //    time points. This can be tricky; we want as much resolution as possible,
 //    but also keep it small
@@ -286,34 +351,97 @@ ArcBasedRoutingProblem *MarineInventoryRoutingProblem::get_arc_based(bool make_f
 //      integers that fall in any node's time window
 //      endpoints and midpoints of time windows
 //    We will use the former
-    std::set<float> tw_points;
-    for (const Node* n : vrptw->get_nodes()) {
-        auto [tw0, tw1] = n->get_window();
-        if (std::isinf(tw1)) {
-            continue;
-        }
-        int start = static_cast<int>(std::ceil(tw0));
-        int end = static_cast<int>(std::floor(tw1)) + 1;
-        for (int t = start; t < end; ++t) {
-            tw_points.insert(static_cast<float>(t));
-        }
-    }
-    tw_points.insert(0.0f);
-    std::vector<float> time_points(tw_points.begin(), tw_points.end());
-    std::sort(time_points.begin(), time_points.end());
+        std::set<float> tw_points;
+        for (const Node* n : vrptw->get_nodes()) {
+            // Kiểm tra Node hợp lệ
+            if (!n) {
+                throw std::runtime_error("Null node encountered in vrptw->get_nodes()!");
+            }
 
-    this->abrp->add_time_points(time_points);
+            auto [tw0, tw1] = n->get_window();
 
-    if (make_feasible) {
-        float high_cost = this->estimate_high_cost();
-        this->abrp->make_feasible(high_cost);
+//            std::cerr << "Node: " << n->get_name()
+//                      << ", tw0=" << tw0
+//                      << ", tw1=" << tw1
+//                      << ", start=" << static_cast<int>(std::ceil(tw0))
+//                      << ", end=" << static_cast<int>(std::floor(tw1)) + 1
+//                      << std::endl;
+
+            if (std::isnan(tw0) || std::isnan(tw1)) {
+                throw std::runtime_error("Time window contains NaN for node: " + n->get_name());
+            }
+
+            if (std::isinf(tw1)) {
+                continue;
+            }
+
+            if (tw0 > tw1) {
+                throw std::runtime_error("Invalid time window: tw0 > tw1 for node: " + n->get_name());
+            }
+
+            int start = static_cast<int>(std::ceil(tw0));
+            int end = static_cast<int>(std::floor(tw1)) + 1;
+
+            // Kiểm tra khoảng thời gian hợp lệ
+            if (start >= end) {
+                throw std::runtime_error("Invalid time window range for node: " + n->get_name());
+            }
+
+            for (int t = start; t < end; ++t) {
+                float time_point = static_cast<float>(t);
+                // Đảm bảo không có NaN trước khi chèn
+                if (std::isnan(time_point)) {
+                    throw std::runtime_error("Generated NaN time point for node: " + n->get_name());
+                }
+                tw_points.insert(time_point);
+            }
+        }
+
+        // Thêm 0.0f và kiểm tra
+        tw_points.insert(0.0f);
+        std::vector<float> time_points(tw_points.begin(), tw_points.end());
+        std::sort(time_points.begin(), time_points.end());
+
+        std::cerr << "Time points: ";
+        // Kiểm tra time_points trước khi thêm vào abrp
+        for (float t : time_points) {
+            if (std::isnan(t)) {
+                throw std::runtime_error("NaN detected in time_points!");
+            }
+        }
+        std::cerr << std::endl;
+        std::cerr << "start adding time points to abrp..." << std::endl;
+
+        this->abrp->add_time_points(time_points);
+        std::cerr << "end added time points to abrp" << std::endl;
+
+        if (make_feasible) {
+            std::cerr << "Making abrp feasible..." << std::endl;
+            float high_cost = this->estimate_high_cost();
+            std::cout << "High cost: " << high_cost << std::endl;
+            this->abrp->make_feasible(high_cost);
+        }
+
+        return this->abrp.get();
     }
-    return this->abrp.get();
+    catch (const std::exception& e) {
+        // Log lỗi chi tiết và rethrow để test case bắt được
+        std::cerr << "Error in get_arc_based: " << e.what() << std::endl;
+        throw;
+    }
+    catch (...) {
+        std::cerr << "Unknown error in get_arc_based!" << std::endl;
+        throw;
+    }
 }
 
 
 std::ostream &operator<<(std::ostream &os, const MarineInventoryRoutingProblem &problem) {
     os << "Time horizon: " << problem.time_horizon << "\n";
-    os << problem.vrptw;
+    if (problem.vrptw) {
+        os << *(problem.vrptw);
+    } else {
+        os << "No VRPTW data available\n";
+    }
     return os;
 }
